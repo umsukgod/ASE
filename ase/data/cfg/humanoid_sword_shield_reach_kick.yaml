@@ -1,6 +1,6 @@
 # if given, will override the device setting in gym. 
 env: 
-  numEnvs: 2048
+  numEnvs: 4096
   envSpacing: 5
   episodeLength: 300
   isFlagrun: False
@@ -9,18 +9,25 @@ env:
   pdControl: True
   powerScale: 1.0
   controlFrequencyInv: 2 # 30 Hz
-  stateInit: "Hybrid"
+  stateInit: "Default"
   hybridInitProb: 0.5
   numAMPObsSteps: 10
-  recoveryEpisodeProb: 0.2
-  recoverySteps: 60
-  fallInitProb: 0.1
   
   localRootObs: True
   keyBodies: ["right_hand", "left_hand", "right_foot", "left_foot", "sword", "shield"]
   contactBodies: ["right_foot", "left_foot"]
   terminationHeight: 0.15
   enableEarlyTermination: True
+  
+  tarSpeed: 1.0
+  tarChangeStepsMin: 50
+  tarChangeStepsMax: 100
+  tarDistMax: 1.0
+  tarHeightMin: 0.2
+  tarHeightMax: 1.0
+  
+  reachBodyName: "left_foot"
+  enableTaskObs: True
 
   asset:
     assetRoot: "ase/data/assets"

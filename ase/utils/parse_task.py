@@ -33,6 +33,7 @@ from env.tasks.humanoid_heading import HumanoidHeading
 from env.tasks.humanoid_location import HumanoidLocation
 from env.tasks.humanoid_strike import HumanoidStrike
 from env.tasks.humanoid_reach import HumanoidReach
+from env.tasks.humanoid_reach_kick import HumanoidReachKick
 from env.tasks.humanoid_perturb import HumanoidPerturb
 from env.tasks.humanoid_view_motion import HumanoidViewMotion
 from env.tasks.vec_task_wrappers import VecTaskPythonWrapper
