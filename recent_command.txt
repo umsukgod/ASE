@@ -1,0 +1,1 @@
+python ase/run.py --task HumanoidMimic --cfg_env ase/data/cfg/humanoid_sword_shield_mimic.yaml --cfg_train ase/data/cfg/train/rlg/hrl_humanoid.yaml --motion_file ase/data/motions/reallusion_sword_shield/RL_Avatar_Atk_2xCombo01_Motion.npy --llc_checkpoint output/20221228_full_llc/nn/Humanoid.pth                            

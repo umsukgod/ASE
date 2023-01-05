@@ -70,6 +70,8 @@ class HumanoidAMP(Humanoid):
         self._amp_obs_buf = torch.zeros((self.num_envs, self._num_amp_obs_steps, self._num_amp_obs_per_step), device=self.device, dtype=torch.float)
         self._curr_amp_obs_buf = self._amp_obs_buf[:, 0]
         self._hist_amp_obs_buf = self._amp_obs_buf[:, 1:]
+
+        self._reseted_ref_motion_times = torch.zeros(self.num_envs, device=self.device, dtype=torch.float)
         
         self._amp_obs_demo_buf = None
 
@@ -197,6 +199,9 @@ class HumanoidAMP(Humanoid):
         else:
             assert(False), "Unsupported state initialization strategy: {:s}".format(str(self._state_init))
 
+
+        if self.num_envs==2:
+            motion_times[1] = motion_times[0]
         root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, key_pos \
                = self._motion_lib.get_motion_state(motion_ids, motion_times)
 
@@ -211,6 +216,7 @@ class HumanoidAMP(Humanoid):
         self._reset_ref_env_ids = env_ids
         self._reset_ref_motion_ids = motion_ids
         self._reset_ref_motion_times = motion_times
+        self._reseted_ref_motion_times[env_ids] = motion_times
         return
 
     def _reset_hybrid_state_init(self, env_ids):
