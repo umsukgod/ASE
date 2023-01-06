@@ -49,7 +49,8 @@ class HRLPlayer(common_player.CommonPlayer):
             llc_config = yaml.load(f, Loader=yaml.SafeLoader)
             llc_config_params = llc_config['params']
             self._latent_dim = llc_config_params['config']['latent_dim']
-        
+        llc_config_params['config']['latent_dim']=64
+
         super().__init__(config)
         
         self._task_size = self.env.task.get_task_obs_size()
@@ -202,8 +203,11 @@ class HRLPlayer(common_player.CommonPlayer):
         done_count = 0.0
         disc_rewards = 0.0
         for t in range(self._llc_steps):
-            llc_actions = self._compute_llc_action(obs, action)
-            obs, curr_rewards, curr_dones, infos = env.step(llc_actions)
+            if self.env.task._is_deepmimic:
+                obs, curr_rewards, curr_dones, infos = env.step(action)
+            else:
+                llc_actions = self._compute_llc_action(obs, action)
+                obs, curr_rewards, curr_dones, infos = env.step(llc_actions)
 
             rewards += curr_rewards
             done_count += curr_dones

@@ -58,7 +58,8 @@ class HRLAgent(common_agent.CommonAgent):
             llc_config = yaml.load(f, Loader=yaml.SafeLoader)
             llc_config_params = llc_config['params']
             self._latent_dim = llc_config_params['config']['latent_dim']
-        
+        llc_config_params['config']['latent_dim']=64
+
         super().__init__(base_name, config)
 
         self._task_size = self.vec_env.env.task.get_task_obs_size()
@@ -79,9 +80,12 @@ class HRLAgent(common_agent.CommonAgent):
         done_count = 0.0
         terminate_count = 0.0
         for t in range(self._llc_steps):
-            llc_actions = self._compute_llc_action(obs, actions)
-            obs, curr_rewards, curr_dones, infos = self.vec_env.step(llc_actions)
-            
+            if self.vec_env.env.task._is_deepmimic:
+                obs, curr_rewards, curr_dones, infos = self.vec_env.step(actions)
+            else:
+                llc_actions = self._compute_llc_action(obs, actions)
+                obs, curr_rewards, curr_dones, infos = self.vec_env.step(llc_actions)
+
             rewards += curr_rewards
             done_count += curr_dones
             terminate_count += infos['terminate']

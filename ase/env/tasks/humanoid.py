@@ -56,6 +56,7 @@ class Humanoid(BaseTask):
         self._local_root_obs = self.cfg["env"]["localRootObs"]
         self._root_height_obs = self.cfg["env"].get("rootHeightObs", True)
         self._enable_early_termination = self.cfg["env"]["enableEarlyTermination"]
+        self._is_deepmimic = cfg["env"].get("deepmimic", False)
         
         key_bodies = self.cfg["env"]["keyBodies"]
         self._setup_character_props(key_bodies)
@@ -308,6 +309,9 @@ class Humanoid(BaseTask):
     def _build_env(self, env_id, env_ptr, humanoid_asset):
         col_group = env_id
         col_filter = self._get_humanoid_collision_filter()
+
+        if self.num_envs == 2 and env_id == 1:
+            col_filter = 1
         segmentation_id = 0
 
         start_pose = gymapi.Transform()
@@ -327,6 +331,10 @@ class Humanoid(BaseTask):
         if (self._pd_control):
             dof_prop = self.gym.get_asset_dof_properties(humanoid_asset)
             dof_prop["driveMode"] = gymapi.DOF_MODE_POS
+
+            if self.num_envs == 2 and env_id == 1:
+                dof_prop["effort"] *= 0.0
+
             self.gym.set_actor_dof_properties(env_ptr, humanoid_handle, dof_prop)
 
         self.humanoid_handles.append(humanoid_handle)

@@ -53,7 +53,8 @@ class HRLBuilder(network_builder.A2CBuilder):
         
         def forward(self, obs_dict):
             mu, sigma, value, states = super().forward(obs_dict)
-            norm_mu = torch.tanh(mu)
+            # norm_mu = torch.tanh(mu)
+            norm_mu = mu
             return norm_mu, sigma, value, states
 
         def eval_critic(self, obs):
