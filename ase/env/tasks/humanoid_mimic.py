@@ -322,9 +322,11 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
                                                   gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
         return
 
+        # self.rew_buf[:] = compute_mimic_reward(root_rot, dof_pos, dof_vel, local_cur_key_pos, root_pos,
+        #     self._tar_root_rot, self._tar_pos, self._tar_vel, local_tar_key_pos, self._tar_root_pos
+        #     )
 
-
-# @torch.jit.script
+@torch.jit.script
 def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos, tar_vel, tar_key_pos, tar_root_pos):
     # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor) -> Tensor
     # breakpoint()
@@ -362,9 +364,9 @@ def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos
     pos_err = torch.sum(pos_diff * pos_diff, dim=-1)
     pos_reward = torch.exp(-pos_err_scale * pos_err)
     
-    vel_diff = vel - tar_vel
-    vel_err = torch.sum(vel_diff * vel_diff, dim=-1)
-    vel_reward = torch.exp(-vel_err_scale * vel_err) + 0.1
+    # vel_diff = vel - tar_vel
+    # vel_err = torch.sum(vel_diff * vel_diff, dim=-1)
+    # vel_reward = torch.exp(-vel_err_scale * vel_err) + 0.1
 
     key_diff = flat_local_key_pos - flat_local_tar_key_pos
     key_err = torch.sum(key_diff * key_diff, dim=-1)
@@ -375,11 +377,13 @@ def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos
     root_reward = torch.exp(-pos_err_scale * root_err)
 
 
-    # print(pos_reward)
-    # print(vel_reward)
-    # print(key_reward)
+    # print(pos_reward[1])
+    # # print(vel_reward[1])
+    # print(key_reward[1])
+    # print(root_reward[1])
+    reward = 4.0*pos_reward*key_reward*root_reward
+    # print(reward[1])
     # print("--------------")
-    reward = 4.0*pos_reward*key_reward*vel_reward*root_reward
 
     return reward
 
