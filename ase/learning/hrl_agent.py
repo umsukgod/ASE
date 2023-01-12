@@ -283,7 +283,10 @@ class HRLAgent(common_agent.CommonAgent):
     def _combine_rewards(self, task_rewards, disc_rewards): 
         combined_rewards = self._task_reward_w * task_rewards + \
                          + self._disc_reward_w * disc_rewards
-        
+        # print("combine rewards")
+        # print("task : "self._task_reward_w)
+        # print("disc : "self._disc_reward_w)
+
         #combined_rewards = task_rewards * disc_rewards
         return combined_rewards
 
