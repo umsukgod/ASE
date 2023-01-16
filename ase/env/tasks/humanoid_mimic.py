@@ -363,7 +363,18 @@ def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos
     pos_diff = pos - tar_pos
     pos_err = torch.sum(pos_diff * pos_diff, dim=-1)
     pos_reward = torch.exp(-pos_err_scale * pos_err)
+    # print(pos_reward[0])
+    
+    root_rot_diff = torch_utils.quat_to_exp_map(tar_rot) - torch_utils.quat_to_exp_map(root_rot)
+    # print(root_rot_diff[0])
+    # print(pos[0])
+    # print(tar_pos[0][:3])
+    # breakpoint()
+    root_rot_err = torch.sum(root_rot_diff * root_rot_diff, dim=-1)
+    # print(root_rot_err[0])
+    root_rot_reward = torch.exp(-10.0 * root_rot_err)
 
+    # print(root_rot_reward[0])
     # print(pos_reward)
     # print("==------")
     
@@ -385,12 +396,12 @@ def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos
     root_reward = torch.exp(-pos_err_scale * root_err)
 
 
-    # print(pos_reward[1])
-    # # print(vel_reward[1])
-    # print(key_reward[1])
-    # print(root_reward[1])
-    reward = 4.0*pos_reward*key_reward*root_reward+vel_reward
-    # print(reward[1])
+    # print(pos_reward[0])
+    # print(vel_reward[0])
+    # print(key_reward[0])
+    # print(root_reward[0])
+    reward = 4.0*pos_reward*key_reward*root_reward*root_rot_reward+vel_reward
+    # print(reward[0])
     # print("--------------")
 
     return reward
