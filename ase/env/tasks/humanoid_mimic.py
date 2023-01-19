@@ -135,11 +135,16 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
     def _compute_reset(self):
         # max_frame = self._motion_lib.get_motion_length(0) self._reseted_ref_motion_times
         ref_motion_max_times = self._motion_lib.get_motion_length(0)-self._reseted_ref_motion_times
+
+        root_rot = self._humanoid_root_states[:, 3:7]
+        root_pos = self._humanoid_root_states[:, 0:3]
+
         self.reset_buf[:], self._terminate_buf[:] = compute_humanoid_mimic_reset(self.reset_buf, self.progress_buf,
                                                    self._contact_forces, self._contact_body_ids,
                                                    self._rigid_body_pos, self.max_episode_length,
                                                    self._enable_early_termination, self._termination_heights,
-                                                   ref_motion_max_times, self.dt)
+                                                   ref_motion_max_times, self.dt,
+                                                   root_pos, root_rot, self._tar_root_pos, self._tar_root_rot)
         return
 
     def _update_task(self):
@@ -326,7 +331,7 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
         #     self._tar_root_rot, self._tar_pos, self._tar_vel, local_tar_key_pos, self._tar_root_pos
         #     )
 
-# @torch.jit.script
+@torch.jit.script
 def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos, tar_vel, tar_key_pos, tar_root_pos):
     # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor) -> Tensor
     # breakpoint()
@@ -409,8 +414,9 @@ def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos
 @torch.jit.script
 def compute_humanoid_mimic_reset(reset_buf, progress_buf, contact_buf, contact_body_ids, rigid_body_pos,
                            max_episode_length, enable_early_termination, termination_heights,
-                           ref_motion_max_times, dt):
-    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, float, bool, Tensor, Tensor, float) -> Tuple[Tensor, Tensor]
+                           ref_motion_max_times, dt,
+                           root_pos, root_rot, tar_root_pos, tar_root_rot):
+    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, float, bool, Tensor, Tensor, float, Tensor, Tensor, Tensor, Tensor) -> Tuple[Tensor, Tensor]
     terminated = torch.zeros_like(reset_buf)
 
     if (enable_early_termination):
@@ -429,6 +435,21 @@ def compute_humanoid_mimic_reset(reset_buf, progress_buf, contact_buf, contact_b
         # first timestep can sometimes still have nonzero contact forces
         # so only check after first couple of steps
         has_fallen *= (progress_buf > 1)
+
+
+        root_dist = tar_root_pos - root_pos
+
+        heading_quat_inv = torch_utils.calc_heading_quat_inv(root_rot)
+        tar_heading_quat = torch_utils.calc_heading_quat(tar_root_rot)
+
+        rel_tar_quat = quat_mul(tar_heading_quat, heading_quat_inv)
+
+        rel_tar_ang = torch_utils.calc_heading(rel_tar_quat)
+
+        far_target_root = torch.logical_or(torch.sqrt(torch.sum(root_dist*root_dist, dim = -1)) > 0.5,torch.abs(rel_tar_ang) > 3.14/4)
+
+        has_fallen = torch.logical_or(has_fallen, far_target_root)
+
         terminated = torch.where(has_fallen, torch.ones_like(reset_buf), terminated)
     
     # reset = torch.where(progress_buf >= max_episode_length - 1, torch.ones_like(reset_buf), terminated)
