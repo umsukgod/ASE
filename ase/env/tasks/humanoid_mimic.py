@@ -381,8 +381,8 @@ def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos
     # print(vel[0])
     # print(tar_vel[0])
     vel_diff = vel - tar_vel
-    vel_err = torch.sum(torch.abs(vel_diff), dim=-1)
-    vel_reward = 0.5*torch.exp(-vel_err_scale * vel_err)
+    vel_err = torch.sum(vel_diff*vel_diff, dim=-1)
+    vel_reward = 1.0*torch.exp(-vel_err_scale * vel_err)
     # print(vel_err[0])
     # print(vel_reward[0])
     # print("---------------")

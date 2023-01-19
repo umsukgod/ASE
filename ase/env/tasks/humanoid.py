@@ -331,8 +331,8 @@ class Humanoid(BaseTask):
         if (self._pd_control):
             dof_prop = self.gym.get_asset_dof_properties(humanoid_asset)
             dof_prop["driveMode"] = gymapi.DOF_MODE_POS
-            # dof_prop["effort"] = 2.0*self.motor_efforts.detach().cpu()
-            # print(dof_prop["effort"])
+            if self._is_deepmimic:
+                dof_prop["effort"] = 2.0*self.motor_efforts.detach().cpu()
 
             if self.num_envs == 2 and env_id == 1:
                 dof_prop["effort"] *= 0.0
