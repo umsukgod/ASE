@@ -153,7 +153,7 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
         # rest_env_ids = reset_task_mask.nonzero(as_tuple=False).flatten()
         # if len(rest_env_ids) > 0:
         #     self._reset_task(rest_env_ids)
-        progress_time = self.progress_buf * self.dt + self._reseted_ref_motion_times
+        progress_time = (self.progress_buf+1) * self.dt + self._reseted_ref_motion_times
         root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, key_pos = self._motion_lib.get_motion_state([0], progress_time)
 
         self._tar_root_pos = root_pos[:, 0:3].clone()
@@ -177,7 +177,7 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
         # self._tar_pos[env_ids, :] = rand_pos
         # self._tar_change_steps[env_ids] = self.progress_buf[env_ids] + change_steps
 
-        root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, key_pos = self._motion_lib.get_motion_state([0], self._reseted_ref_motion_times[env_ids])
+        root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, key_pos = self._motion_lib.get_motion_state([0],  self.dt+self._reseted_ref_motion_times[env_ids])
 
         self._tar_root_pos[env_ids] = root_pos[:, 0:3].clone()
         self._tar_root_rot[env_ids] = root_rot.clone()
@@ -188,11 +188,14 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
         return
 
     def _compute_task_obs(self, env_ids=None):
+        progress_time = (self.progress_buf+1) * self.dt + self._reseted_ref_motion_times
+        _tar_root_pos, _tar_root_rot, _tar_pos, _tar_root_vel, _tar_root_ang_vel, _tar_dof_vel, _tar_key_pos = self._motion_lib.get_motion_state([0], progress_time)
+
         key_pos = self._rigid_body_pos[:, self._key_body_ids, :] - self._humanoid_root_states[:, 0:3].unsqueeze(-2)
-        tar_key_pos = self._tar_key_pos - self._tar_root_pos.unsqueeze(-2)
+        tar_key_pos = _tar_key_pos - _tar_root_pos.unsqueeze(-2)
 
         root_rot = self._humanoid_root_states[:, 3:7]
-        tar_rot = self._tar_root_rot
+        tar_rot =_tar_root_rot
 
         heading_rot = torch_utils.calc_heading_quat_inv(root_rot)
 
@@ -220,17 +223,20 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
         # print("=======================")
 
         heading_rot = torch_utils.calc_heading_quat_inv(root_rot)
-        tar_root_position = quat_rotate(heading_rot, self._tar_root_pos - self._humanoid_root_states[:, 0:3])
+        tar_root_position = quat_rotate(heading_rot, _tar_root_pos - self._humanoid_root_states[:, 0:3])
         # print(self._tar_root_pos[0])
         # print(self._humanoid_root_states[:, 0:3][0])
         # print(tar_root_position[0])
         # print("------------------------")
 
+        # print("task obs")
+        # print(_tar_root_pos[0])
+
 
         if (env_ids is None):
-            return torch.cat((tar_root_position, self._tar_pos - self._dof_pos, flat_local_tar_key_pos - flat_local_key_pos), dim=-1)
+            return torch.cat((tar_root_position, _tar_pos - self._dof_pos, flat_local_tar_key_pos - flat_local_key_pos), dim=-1)
         else:
-            return torch.cat((tar_root_position[env_ids], self._tar_pos[env_ids] - self._dof_pos[env_ids], flat_local_tar_key_pos[env_ids] - flat_local_key_pos[env_ids]), dim=-1)
+            return torch.cat((tar_root_position[env_ids], _tar_pos[env_ids] - self._dof_pos[env_ids], flat_local_tar_key_pos[env_ids] - flat_local_key_pos[env_ids]), dim=-1)
 
         # # obs = compute_location_observations(root_states, tar_pos)
 
@@ -245,6 +251,9 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
         root_pos = self._humanoid_root_states[:, 0:3]
         # key_pos = self._rigid_body_pos[:, self._key_body_ids, :].clone()
 
+
+        # print("reward")
+        # print(self._tar_root_pos[0])
         local_tar_key_pos = self._tar_key_pos - self._tar_root_pos.unsqueeze(-2)
         local_cur_key_pos = self._rigid_body_pos[:, self._key_body_ids, :] - self._humanoid_root_states[:, 0:3].unsqueeze(-2)
 
@@ -363,7 +372,7 @@ def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos
 
 
     pos_err_scale = 2.0
-    vel_err_scale = 0.05
+    vel_err_scale = 0.01
     
     pos_diff = pos - tar_pos
     pos_err = torch.sum(pos_diff * pos_diff, dim=-1)
@@ -402,10 +411,10 @@ def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos
 
 
     # print(pos_reward[0])
-    # print(vel_reward[0])
+    # print(vel_reward[1])
     # print(key_reward[0])
     # print(root_reward[0])
-    reward = 4.0*pos_reward*key_reward*root_reward*root_rot_reward+vel_reward
+    reward = 4.0*pos_reward*key_reward*root_reward*root_rot_reward+1.0*vel_reward
     # print(reward[0])
     # print("--------------")
 
