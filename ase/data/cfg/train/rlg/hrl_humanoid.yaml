@@ -46,7 +46,7 @@ params:
     reward_shaper:
       scale_value: 1
     normalize_advantage: True
-    gamma: 0.99
+    gamma: 0.95
     tau: 0.95
     learning_rate: 2e-5
     lr_schedule: constant
@@ -71,6 +71,6 @@ params:
     task_reward_w: 0.9
     disc_reward_w: 0.1
 
-    llc_steps: 5
+    llc_steps: 3
     llc_config: ase/data/cfg/train/rlg/ase_humanoid_hrl.yaml
 

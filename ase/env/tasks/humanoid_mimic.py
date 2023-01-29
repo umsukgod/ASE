@@ -57,6 +57,8 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
         self._tar_pos = torch.zeros_like(self._dof_pos)
         self._tar_vel = torch.zeros_like(self._dof_vel)
         self._tar_key_pos = torch.zeros_like(self._rigid_body_pos[:, self._key_body_ids, :])
+
+        self.sum_reward = 0.0
         return
 
     def get_task_obs_size(self):
@@ -145,6 +147,14 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
                                                    self._enable_early_termination, self._termination_heights,
                                                    ref_motion_max_times, self.dt,
                                                    root_pos, root_rot, self._tar_root_pos, self._tar_root_rot)
+
+        if self.num_envs == 2:
+            self.reset_buf[1] = self.reset_buf[0]
+            self._terminate_buf[1] = self._terminate_buf[0]
+
+        if self.reset_buf[0] == 1:
+            self.sum_reward = 0.0
+
         return
 
     def _update_task(self):
@@ -260,6 +270,10 @@ class HumanoidMimic(humanoid_amp_task.HumanoidAMPTask):
         self.rew_buf[:] = compute_mimic_reward(root_rot, dof_pos, dof_vel, local_cur_key_pos, root_pos,
             self._tar_root_rot, self._tar_pos, self._tar_vel, local_tar_key_pos, self._tar_root_pos
             )
+
+        self.sum_reward += self.rew_buf[0]
+        # print(self.sum_reward)
+        # print(self.progress_buf[0])
         return
 
     def _draw_task(self):
