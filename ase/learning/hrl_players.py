@@ -132,12 +132,13 @@ class HRLPlayer(common_player.CommonPlayer):
 
             for n in range(self.max_steps):
                 obs_dict = self.env_reset(done_indices)
-
+                # is_determenistic =False
                 if has_masks:
                     masks = self.env.get_action_mask()
                     action = self.get_masked_action(obs_dict, masks, is_determenistic)
                 else:
                     action = self.get_action(obs_dict, is_determenistic)
+                # print(action[0].mean().item())
                 obs_dict, r, done, info = self.env_step(self.env, obs_dict, action)
                 cr += r
                 steps += 1

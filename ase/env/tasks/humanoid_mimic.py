@@ -417,11 +417,11 @@ def compute_mimic_reward(root_rot, pos, vel, key_pos, root_pos, tar_rot, tar_pos
 
     key_diff = flat_local_key_pos - flat_local_tar_key_pos
     key_err = torch.sum(key_diff * key_diff, dim=-1)
-    key_reward = torch.exp(-pos_err_scale * key_err)
+    key_reward = torch.exp(-pos_err_scale*20.0 * key_err)
 
     root_diff = root_pos - tar_root_pos
     root_err = torch.sum(root_diff * root_diff, dim=-1)
-    root_reward = torch.exp(-pos_err_scale * root_err)
+    root_reward = torch.exp(-10.0 * root_err)
 
 
     # print(pos_reward[0])

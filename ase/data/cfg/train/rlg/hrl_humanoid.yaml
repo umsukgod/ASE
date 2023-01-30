@@ -71,6 +71,6 @@ params:
     task_reward_w: 0.9
     disc_reward_w: 0.1
 
-    llc_steps: 3
+    llc_steps: 1
     llc_config: ase/data/cfg/train/rlg/ase_humanoid_hrl.yaml
 
