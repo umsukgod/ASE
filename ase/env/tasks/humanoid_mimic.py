@@ -460,18 +460,18 @@ def compute_humanoid_mimic_reset(reset_buf, progress_buf, contact_buf, contact_b
         has_fallen *= (progress_buf > 1)
 
 
-        root_dist = tar_root_pos - root_pos
+        # root_dist = tar_root_pos - root_pos
 
-        heading_quat_inv = torch_utils.calc_heading_quat_inv(root_rot)
-        tar_heading_quat = torch_utils.calc_heading_quat(tar_root_rot)
+        # heading_quat_inv = torch_utils.calc_heading_quat_inv(root_rot)
+        # tar_heading_quat = torch_utils.calc_heading_quat(tar_root_rot)
 
-        rel_tar_quat = quat_mul(tar_heading_quat, heading_quat_inv)
+        # rel_tar_quat = quat_mul(tar_heading_quat, heading_quat_inv)
 
-        rel_tar_ang = torch_utils.calc_heading(rel_tar_quat)
+        # rel_tar_ang = torch_utils.calc_heading(rel_tar_quat)
 
-        far_target_root = torch.logical_or(torch.sqrt(torch.sum(root_dist*root_dist, dim = -1)) > 0.5,torch.abs(rel_tar_ang) > 3.14/4)
+        # far_target_root = torch.logical_or(torch.sqrt(torch.sum(root_dist*root_dist, dim = -1)) > 0.5,torch.abs(rel_tar_ang) > 3.14/4)
 
-        has_fallen = torch.logical_or(has_fallen, far_target_root)
+        # has_fallen = torch.logical_or(has_fallen, far_target_root)
 
         terminated = torch.where(has_fallen, torch.ones_like(reset_buf), terminated)
     

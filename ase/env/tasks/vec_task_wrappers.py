@@ -59,3 +59,9 @@ class VecTaskPythonWrapper(VecTaskPython):
 
     def fetch_amp_obs_demo(self, num_samples):
         return self.task.fetch_amp_obs_demo(num_samples)
+
+    def get_amp_obs_demo_full(self):
+        return self.task.get_amp_obs_demo_full()
+
+    def get_current_amp_observations(self, env_ids=None):
+        return self.task.get_current_amp_observations(env_ids)

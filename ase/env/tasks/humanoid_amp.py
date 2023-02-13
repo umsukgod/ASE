@@ -52,6 +52,7 @@ class HumanoidAMP(Humanoid):
         self._state_init = HumanoidAMP.StateInit[state_init]
         self._hybrid_init_prob = cfg["env"]["hybridInitProb"]
         self._num_amp_obs_steps = cfg["env"]["numAMPObsSteps"]
+        self._num_amp_obs_steps = 2
         assert(self._num_amp_obs_steps >= 2)
 
         self._reset_default_env_ids = []
@@ -111,6 +112,26 @@ class HumanoidAMP(Humanoid):
         amp_obs_demo_flat = self._amp_obs_demo_buf.view(-1, self.get_num_amp_obs())
 
         return amp_obs_demo_flat
+
+    def get_amp_obs_demo_full(self):
+
+        motion_ids = self._motion_lib.sample_motions(1)
+        motion_length = self._motion_lib.get_motion_length(0)
+        num_amp_obs =int(motion_length.item()/self.dt) - 1
+
+        motion_ids = torch.tile(motion_ids.unsqueeze(-1), [1, num_amp_obs])
+        motion_times = self.dt * torch.arange(0, num_amp_obs, device=self.device)
+
+        motion_ids = motion_ids.view(-1)
+        motion_times = motion_times.view(-1)
+        root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, key_pos \
+               = self._motion_lib.get_motion_state(motion_ids, motion_times)
+        amp_obs_demo = build_amp_observations(root_pos, root_rot, root_vel, root_ang_vel,
+                                              dof_pos, dof_vel, key_pos,
+                                              self._local_root_obs, self._root_height_obs,
+                                              self._dof_obs_size, self._dof_offsets)
+        return amp_obs_demo
+
 
     def build_amp_obs_demo(self, motion_ids, motion_times0):
         dt = self.dt
@@ -306,6 +327,26 @@ class HumanoidAMP(Humanoid):
                                                                    self._dof_obs_size, self._dof_offsets)
         return
 
+
+    def get_current_amp_observations(self, env_ids=None):
+        key_body_pos = self._rigid_body_pos[:, self._key_body_ids, :]
+        if (env_ids is None):
+            return build_amp_observations(self._rigid_body_pos[:, 0, :],
+                                                               self._rigid_body_rot[:, 0, :],
+                                                               self._rigid_body_vel[:, 0, :],
+                                                               self._rigid_body_ang_vel[:, 0, :],
+                                                               self._dof_pos, self._dof_vel, key_body_pos,
+                                                               self._local_root_obs, self._root_height_obs, 
+                                                               self._dof_obs_size, self._dof_offsets)
+        else:
+            return build_amp_observations(self._rigid_body_pos[env_ids][:, 0, :],
+                                                                   self._rigid_body_rot[env_ids][:, 0, :],
+                                                                   self._rigid_body_vel[env_ids][:, 0, :],
+                                                                   self._rigid_body_ang_vel[env_ids][:, 0, :],
+                                                                   self._dof_pos[env_ids], self._dof_vel[env_ids], key_body_pos[env_ids],
+                                                                   self._local_root_obs, self._root_height_obs, 
+                                                                   self._dof_obs_size, self._dof_offsets)
+        return
 
 #####################################################################
 ###=========================jit functions=========================###

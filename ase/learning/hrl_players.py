@@ -101,6 +101,8 @@ class HRLPlayer(common_player.CommonPlayer):
         has_masks = False
         has_masks_func = getattr(self.env, "has_action_mask", None) is not None
 
+        self.amp_motions = self.env.task.get_amp_obs_demo_full()
+
         op_agent = getattr(self.env, "create_agent", None)
         if op_agent:
             agent_inited = True
@@ -207,8 +209,15 @@ class HRLPlayer(common_player.CommonPlayer):
             if self.env.task._is_deepmimic:
                 obs, curr_rewards, curr_dones, infos = env.step(action)
             else:
+                # cur_amp_obs = self.env.get_current_amp_observations([0])
+                # target_transition = torch.cat((cur_amp_obs[0], self.amp_motions[self.env.task.progress_buf[0]+1]))
+                # # target_transition = torch.cat((self.amp_motions[self.env.task.progress_buf[0]], self.amp_motions[self.env.task.progress_buf[0]+1]))
+                # encoded_z = self._llc_agent.model.a2c_network.eval_enc(target_transition)
+                # encoded_z_double = torch.cat((encoded_z.unsqueeze(0), encoded_z.unsqueeze(0)))
+                # llc_actions = self._compute_llc_action(obs, encoded_z_double)
                 llc_actions = self._compute_llc_action(obs, action)
                 obs, curr_rewards, curr_dones, infos = env.step(llc_actions)
+                # breakpoint()
 
             rewards += curr_rewards
             done_count += curr_dones
